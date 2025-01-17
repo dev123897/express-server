@@ -1,0 +1,35 @@
+{
+  "name": "portalserver",
+  "version": "1.0.0",
+  "main": "main.js",
+  "scripts": {
+    "dev": "eslint && nodemon main.js",
+    "prod": "production=1 node main.js",
+    "test": "mocha",
+    "lint": "eslint"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.730.0",
+    "apicache": "^1.6.3",
+    "axios": "^1.7.7",
+    "bcrypt": "^5.1.1",
+    "body-parser": "^1.20.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.21.1",
+    "lodash": "^4.17.21",
+    "mariadb": "^3.3.2",
+    "socket.io": "^4.8.1"
+  },
+  "devDependencies": {
+    "eslint": "^9.13.0",
+    "globals": "^15.11.0",
+    "mocha": "^10.7.3",
+    "nodemon": "^3.1.7",
+    "sinon": "^19.0.2"
+  }
+}
