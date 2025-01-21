@@ -1,10 +1,13 @@
-/* eslint-disable */
 const wrap = require('../tools/wrap')
 const db = require('../tools/db')
 const fs = require('fs')
-const path = require('path')
-const childProcess = require('child_process')
+const {basename} = require('path')
+const {spawnSync} = require('child_process')
 const resourceRoute = require('../tools/resourceRoute.js')
+const axios = require('axios').default
+const {randomUUID} = require('crypto')
+
+const handleError = e => { if(e) console.error(e) }
 
 const router = resourceRoute({
   resource: 'files_resource',
@@ -26,7 +29,7 @@ const router = resourceRoute({
     },
     {
       name: 'file',
-      transform: row => row.file = path.basename(row.file) // do not send file path
+      transform: row => row.file = basename(row.file) // do not send file path
     }
   ],
   links: [
@@ -60,21 +63,41 @@ router.get('/files/download/:id', wrap(async (req, res, next) => { // eslint-dis
     return res.status(400).json({ message: 'operation failed: invalid parameter "id"'})
   }
 
-  const file = (await db.query('SELECT file FROM files ' + where, params))[0].file
-  const dir = path.dirname(file)
+  // TODO - add recurzive zip code as layer to labmda so we don't have to do it this way
+  const filepaths = await db.query('SELECT file FROM files ' + where, params)
+  const archive = `archive-${randomUUID()}`
+  const archivedir = './tmp/' + archive
 
-  const zipname = 'accountName.zip' // TODO - implement this, also handle case where we get multiple file ids from id is array
-  // TODO - prob will need a subfolder for range of files
-  // TODO NOTE - this route zips the entire temp/, it also creates a folder for every directory in the route
+  // If dirs dont exist, create them
+  await fs.promises.access(archivedir , fs.constants.F_OK)
+    .catch(() => fs.promises.mkdir(archivedir , {recursive: true}))
 
-  childProcess.spawnSync('zip', ['-r', zipname, dir])
+  await Promise.all(
+    filepaths.map(({ file }) =>
+      axios({
+        method: 'get',
+        url: process.env.AWS_LAMBDA_S3_STREAM,
+        params: { file },
+        responseType: 'stream'
+      })
+        .then(({ data }) => fs.promises.writeFile(`${archivedir}/${file}`, data))
+        .catch(console.error)
+    )
+  )
+
+  let zipname = archive + '.zip'
+
+  // cwd of /tmp so then zip wont compress the whole directory
+  spawnSync('zip', ['-r', zipname, archive], {cwd: './tmp'})
+
+  zipname = './tmp/' + zipname
 
   // CORS authorization for axios. Without this, the download still works but Content-Disposition will not be set in AxiosHeaders for the response object
   res.set('Access-Control-Expose-Headers', 'Content-Disposition')
 
-  res.set('Content-Length', fs.statSync(zipname).size)
+  res.set('Content-Length', (await fs.promises.stat(zipname)).size)
   res.set('Content-Type', 'application/octet-stream')
-  res.set('Content-Disposition', 'attachment; filename=' + path.basename(zipname))
+  res.set('Content-Disposition', 'attachment; filename=' + basename(zipname))
 
   const stream = fs.createReadStream(zipname)
 
@@ -82,10 +105,13 @@ router.get('/files/download/:id', wrap(async (req, res, next) => { // eslint-dis
     console.error(e)
     res.status(500).json({ error: 'failed to download file' })
   })
+
+  stream.on('close', () => {
+    fs.rm(zipname, handleError)
+    fs.rm(archivedir , { recursive: true, force: true }, handleError)
+  })
+
   stream.pipe(res)
-
-  fs.rm(zipname, console.error)
 }))
-
 
 module.exports = router

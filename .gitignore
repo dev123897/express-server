@@ -4,3 +4,5 @@ node_modules
 tests/mochatemplate.js
 notes
 TODO
+tmp/
+*.swp
