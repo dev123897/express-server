@@ -53,7 +53,8 @@ module.exports = resourceRoute({
     {
       name: 'c.name',
       displayName: 'freightCompany',
-      disableEdit: true
+      disableEdit: true,
+      readonly: true
     }
   ],
   where: {

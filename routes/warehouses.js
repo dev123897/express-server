@@ -15,6 +15,8 @@ module.exports = resourceRoute({
       if (req.method !== 'GET') {
         const payload = req.method !== 'DELETE' ? 'body' : 'query'
         req[payload]['warehouses.sent'] = req[payload].sent
+
+        if (req.method === 'DELETE') req.query['warehouses.id'] = req.query.id
       }
 
       next()

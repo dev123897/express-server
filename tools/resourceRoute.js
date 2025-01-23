@@ -116,7 +116,7 @@ function generateSql(table, req) {
 
       break
     case 'POST':
-      filteredCols = table.columns.filter(c => !c.primaryKey) // do not operate on primary key
+      filteredCols = table.columns.filter(c => !c.primaryKey && !c.readonly) // do not operate on primary key
 
       const questionMarks = Array(filteredCols.length).fill('?').join(',')
       query = `INSERT INTO ${table.table} (${getColList(filteredCols)}) VALUE (${questionMarks})`
