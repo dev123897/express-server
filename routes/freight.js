@@ -7,6 +7,15 @@ module.exports = resourceRoute({
   joins: [
     'LEFT JOIN freight_companies AS c ON c.id = freightCompanyId'
   ],
+  preprocessors: [
+    (req, res, next) => {
+      // TODO - tacky fix, refactor. shouldn't have to do aliasing in the routes.
+      // resource.js should handle db aliasing. this can be done when building the parameters list.
+      if (req.method === 'GET' && req.query.sort === 'id') req.query.sort = 'freight.id'
+
+      next()
+    }
+  ],
   disableAdd: true,
   disableDelete: true,
   search: ['freight.id', 'c.name'],

@@ -18,6 +18,8 @@ module.exports = resourceRoute({
 
         if (req.method === 'DELETE') req.query['warehouses.id'] = req.query.id
       }
+      else if (req.query.sort === 'id') req.query.sort = 'warehouses.id'
+      else if (req.query.sort === 'sent') req.query.sort = 'warehouses.sent'
 
       next()
     }

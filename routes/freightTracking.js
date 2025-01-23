@@ -21,6 +21,8 @@ module.exports = resourceRoute({
 
         for(const key in req[payload]) req[payload][`freightTracking.${key}`] = req[payload][key]
       }
+      else if (req.query.sort === 'name') req.query.sort = 'freightTracking.name'
+      else if (req.query.sort === 'freightCompanyId') req.query.sort = 'freightTracking.freightCompanyId'
 
       next()
     }
