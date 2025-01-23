@@ -3,8 +3,7 @@ const { Server } = require("socket.io")
 const io = new Server({
   connectionStateRecovery: {/* this enables state restore for a reconnected socket */},
   cors: {
-    // must allow cors requests for the front end since they are not served on the same port
-    origin: `${process.env.FRONT_END_ADDR}:${process.env.FRONT_END_PORT}`
+    origin: process.env.CORS_ORIGIN
   }
 })
 
